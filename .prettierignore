@@ -1,0 +1,9 @@
+node_modules
+lib
+coverage
+pnpm-lock.yaml
+*.tsbuildinfo
+firestore-debug.log
+firebase-debug.log
+ui-debug.log
+.firebase

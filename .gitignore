@@ -1,0 +1,22 @@
+node_modules
+lib
+coverage
+.next
+.cache
+
+# Firebase
+.firebase
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+
+# env
+.env
+.env.local
+.env.*.local
+*.tsbuildinfo
+
+# editor / OS
+.DS_Store
+.idea
+.vscode

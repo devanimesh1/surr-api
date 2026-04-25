@@ -1,0 +1,36 @@
+{
+  "name": "surr-api",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "lint": "pnpm -r run lint",
+    "typecheck": "pnpm -r run typecheck",
+    "test": "pnpm -r run test",
+    "build": "pnpm -r run build",
+    "format": "prettier --write \"**/*.{ts,md,json,yaml,yml}\"",
+    "format:check": "prettier --check \"**/*.{ts,md,json,yaml,yml}\"",
+    "emulators": "npx firebase-tools emulators:start --only auth,firestore",
+    "prepare": "husky"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
+    "prettier": "^3.8.3",
+    "typescript": "^5.6.3"
+  },
+  "engines": {
+    "node": "20"
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write",
+      "pnpm --filter ./functions run lint:fix",
+      "pnpm --filter ./services/worker run lint:fix"
+    ],
+    "*.{md,json,yaml,yml}": [
+      "prettier --write"
+    ]
+  },
+  "packageManager": "pnpm@9.15.0"
+}

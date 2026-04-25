@@ -1,0 +1,32 @@
+{
+  "name": "@surr/worker",
+  "version": "0.0.0",
+  "private": true,
+  "main": "lib/server.js",
+  "engines": {
+    "node": "20"
+  },
+  "scripts": {
+    "build": "tsc",
+    "start": "node lib/server.js",
+    "dev": "tsx src/server.ts",
+    "lint": "eslint \"src/**/*.ts\"",
+    "lint:fix": "eslint --fix \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "test": "echo \"(no worker tests yet)\""
+  },
+  "dependencies": {
+    "@surr/shared": "workspace:*",
+    "express": "^4.21.2",
+    "firebase-admin": "^13.0.2"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.14.0",
+    "@typescript-eslint/eslint-plugin": "^8.21.0",
+    "@typescript-eslint/parser": "^8.21.0",
+    "eslint": "^9.18.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.6.3"
+  }
+}
