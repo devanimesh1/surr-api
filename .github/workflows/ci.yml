@@ -27,6 +27,9 @@ jobs:
       - name: Format check
         run: pnpm format:check
 
+      - name: Build shared (consumed by functions + worker)
+        run: pnpm --filter @surr/shared run build
+
       - name: Lint
         run: pnpm lint
 
