@@ -27,16 +27,20 @@ function fakeDoc(path: string) {
   };
 }
 
+type FakeRef = ReturnType<typeof fakeDoc>;
+
 const fakeFirestore = {
   doc: (path: string) => fakeDoc(path),
-  runTransaction: async (
+  runTransaction: async <T>(
     fn: (tx: {
-      update: (ref: ReturnType<typeof fakeDoc>, patch: Record<string, unknown>) => void;
-      set: (ref: ReturnType<typeof fakeDoc>, data: Record<string, unknown>) => void;
-    }) => Promise<void>,
-  ) => {
+      get: (ref: FakeRef) => ReturnType<FakeRef["get"]>;
+      update: (ref: FakeRef, patch: Record<string, unknown>) => void;
+      set: (ref: FakeRef, data: Record<string, unknown>) => void;
+    }) => Promise<T>,
+  ): Promise<T> => {
     const ops: Array<() => Promise<void>> = [];
-    await fn({
+    const result = await fn({
+      get: (ref) => ref.get(),
       update: (ref, patch) => {
         ops.push(() => ref.update(patch));
       },
@@ -45,6 +49,7 @@ const fakeFirestore = {
       },
     });
     for (const op of ops) await op();
+    return result;
   },
 };
 

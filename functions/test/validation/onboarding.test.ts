@@ -55,12 +55,26 @@ describe("parseOnboardingPayload", () => {
     expect(() => parseOnboardingPayload({ languages: ["en"], artists: [long] })).toThrow(/<=/);
   });
 
-  it("rejects too many languages", () => {
+  it("accepts the maximum allowed unique languages", () => {
     expect(() =>
       parseOnboardingPayload({
         languages: ["pa", "hi", "ta", "te", "ml", "mr", "bn", "haryanvi", "en", "es", "pa"],
         artists: ["X"],
       }),
     ).not.toThrow();
+  });
+
+  it("rejects too many artists", () => {
+    const artists = Array.from({ length: 21 }, (_, i) => `Artist ${i}`);
+    expect(() => parseOnboardingPayload({ languages: ["en"], artists })).toThrow(
+      /at most 20 artists/,
+    );
+  });
+
+  it("rejects too many moods", () => {
+    const moods = Array.from({ length: 11 }, (_, i) => `mood-${i}`);
+    expect(() => parseOnboardingPayload({ languages: ["en"], artists: ["X"], moods })).toThrow(
+      /at most 10 moods/,
+    );
   });
 });

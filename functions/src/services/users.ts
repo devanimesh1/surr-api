@@ -8,28 +8,34 @@ export interface IdentityClaims {
   photoURL: string | null;
 }
 
+function freshUser(claims: IdentityClaims, now: string): User {
+  return {
+    uid: claims.uid,
+    email: claims.email ?? "",
+    displayName: claims.displayName?.trim() || claims.email?.split("@")[0] || "Listener",
+    photoURL: claims.photoURL ?? undefined,
+    preferredLanguages: [],
+    favoriteArtists: [],
+    tier: "free",
+    createdAt: now,
+    lastActiveAt: now,
+  };
+}
+
 export async function getOrCreateUser(db: Firestore, claims: IdentityClaims): Promise<User> {
   const ref = db.doc(`users/${claims.uid}`);
-  const snap = await ref.get();
-  if (!snap.exists) {
+  return db.runTransaction(async (tx) => {
+    const snap = await tx.get(ref);
     const now = new Date().toISOString();
-    const fresh: User = {
-      uid: claims.uid,
-      email: claims.email ?? "",
-      displayName: claims.displayName?.trim() || claims.email?.split("@")[0] || "Listener",
-      photoURL: claims.photoURL ?? undefined,
-      preferredLanguages: [],
-      favoriteArtists: [],
-      tier: "free",
-      createdAt: now,
-      lastActiveAt: now,
-    };
-    await ref.set(fresh);
-    return fresh;
-  }
-  const existing = snap.data() as User;
-  await ref.update({ lastActiveAt: new Date().toISOString() });
-  return existing;
+    if (!snap.exists) {
+      const fresh = freshUser(claims, now);
+      tx.set(ref, fresh);
+      return fresh;
+    }
+    const existing = snap.data() as User;
+    tx.update(ref, { lastActiveAt: now });
+    return existing;
+  });
 }
 
 export async function isOnboardingComplete(db: Firestore, uid: string): Promise<boolean> {
