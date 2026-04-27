@@ -1,4 +1,21 @@
-export type Language = "pa" | "hi" | "ta" | "te" | "ml" | "mr" | "bn" | "haryanvi" | "en" | "es";
+export const LANGUAGES = [
+  "pa",
+  "hi",
+  "ta",
+  "te",
+  "ml",
+  "mr",
+  "bn",
+  "haryanvi",
+  "en",
+  "es",
+] as const;
+
+export type Language = (typeof LANGUAGES)[number];
+
+export function isLanguage(value: unknown): value is Language {
+  return typeof value === "string" && (LANGUAGES as readonly string[]).includes(value);
+}
 
 export interface Track {
   id: string;

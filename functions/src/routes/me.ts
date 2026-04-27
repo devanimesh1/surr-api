@@ -1,42 +1,57 @@
 import { Router } from "express";
+import type { MeResponse, OnboardingResponse, User } from "@surr/shared";
 import { requireAuth, type AuthedRequest } from "../middleware/auth";
 import { db } from "../services/firebase";
+import { getOrCreateUser, isOnboardingComplete } from "../services/users";
+import { parseOnboardingPayload } from "../validation/onboarding";
 import { ok } from "../utils/response";
-import type { MeResponse, User } from "@surr/shared";
 
 export function meRouter(): Router {
   const r = Router();
 
   r.get("/", requireAuth, async (req, res, next) => {
     try {
-      const { uid, email, displayName, photoURL } = (req as AuthedRequest).user;
-      const ref = db().doc(`users/${uid}`);
-      const snap = await ref.get();
-      let user: User;
+      const claims = (req as AuthedRequest).user;
+      const firestore = db();
+      const [user, completed] = await Promise.all([
+        getOrCreateUser(firestore, claims),
+        isOnboardingComplete(firestore, claims.uid),
+      ]);
+      const body: MeResponse = { user, needsOnboarding: !completed };
+      ok(res, body);
+    } catch (err) {
+      next(err);
+    }
+  });
 
-      if (!snap.exists) {
-        const now = new Date().toISOString();
-        user = {
-          uid,
-          email: email ?? "",
-          displayName: displayName ?? email?.split("@")[0] ?? "Listener",
-          photoURL: photoURL ?? undefined,
-          preferredLanguages: [],
-          favoriteArtists: [],
-          tier: "free",
-          createdAt: now,
+  r.post("/onboarding", requireAuth, async (req, res, next) => {
+    try {
+      const claims = (req as AuthedRequest).user;
+      const payload = parseOnboardingPayload(req.body);
+      const firestore = db();
+      const userRef = firestore.doc(`users/${claims.uid}`);
+      const stateRef = firestore.doc(`users/${claims.uid}/onboarding/state`);
+      const now = new Date().toISOString();
+
+      await getOrCreateUser(firestore, claims);
+      await firestore.runTransaction(async (tx) => {
+        tx.update(userRef, {
+          preferredLanguages: payload.languages,
+          favoriteArtists: payload.artists,
           lastActiveAt: now,
-        };
-        await ref.set(user);
-      } else {
-        user = snap.data() as User;
-        await ref.update({ lastActiveAt: new Date().toISOString() });
-      }
+        });
+        tx.set(stateRef, {
+          languages: payload.languages,
+          artists: payload.artists,
+          moods: payload.moods,
+          completed: true,
+          completedAt: now,
+        });
+      });
 
-      const onboardingSnap = await db().doc(`users/${uid}/onboarding/state`).get();
-      const needsOnboarding = !onboardingSnap.exists || !onboardingSnap.data()?.completed;
-
-      const body: MeResponse = { user, needsOnboarding };
+      const updatedSnap = await userRef.get();
+      const user = updatedSnap.data() as User;
+      const body: OnboardingResponse = { user, needsOnboarding: false };
       ok(res, body);
     } catch (err) {
       next(err);
